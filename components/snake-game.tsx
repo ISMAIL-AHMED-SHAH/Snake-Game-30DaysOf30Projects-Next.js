@@ -4,12 +4,6 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { PauseIcon, PlayIcon, RefreshCcwIcon } from "lucide-react";
 
-// Sound effects for gameplay
-const gameStartSound = new Audio("/sounds/start.mp3");
-const eatSound = new Audio("/sounds/eat.mp3");
-const pauseSound = new Audio("/sounds/pause.mp3");
-const resetSound = new Audio("/sounds/reset.mp3");
-
 enum GameState {
   START,
   PAUSE,
@@ -24,18 +18,15 @@ enum Direction {
   RIGHT,
 }
 
-// Define the Position interface
 interface Position {
   x: number;
   y: number;
 }
 
-// Initial state for the snake and food
 const initialSnake: Position[] = [{ x: 0, y: 0 }];
 const initialFood: Position = { x: 5, y: 5 };
 
 export default function SnakeGame() {
-  // State to manage the game
   const [gameState, setGameState] = useState<GameState>(GameState.START);
   const [snake, setSnake] = useState<Position[]>(initialSnake);
   const [food, setFood] = useState<Position>(initialFood);
@@ -44,7 +35,20 @@ export default function SnakeGame() {
   const [highScore, setHighScore] = useState<number>(0);
   const gameInterval = useRef<NodeJS.Timeout | null>(null);
 
-  // Function to move the snake
+  const gameStartSound = useRef<HTMLAudioElement | null>(null);
+  const eatSound = useRef<HTMLAudioElement | null>(null);
+  const pauseSound = useRef<HTMLAudioElement | null>(null);
+  const resetSound = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      gameStartSound.current = new Audio("/sounds/start.mp3");
+      eatSound.current = new Audio("/sounds/eat.mp3");
+      pauseSound.current = new Audio("/sounds/pause.mp3");
+      resetSound.current = new Audio("/sounds/reset.mp3");
+    }
+  }, []);
+
   const moveSnake = useCallback(() => {
     setSnake((prevSnake) => {
       const newSnake = [...prevSnake];
@@ -68,13 +72,11 @@ export default function SnakeGame() {
           return newSnake;
       }
 
-      // Check for boundary collisions (game over condition)
       if (newHead.x < 0 || newHead.y < 0 || newHead.x > 9 || newHead.y > 9) {
         setGameState(GameState.GAME_OVER);
         return newSnake;
       }
 
-      // Check for self-collision
       if (newSnake.some((part) => part.x === newHead.x && part.y === newHead.y)) {
         setGameState(GameState.GAME_OVER);
         return newSnake;
@@ -83,22 +85,20 @@ export default function SnakeGame() {
       newSnake.unshift(newHead);
 
       if (newHead.x === food.x && newHead.y === food.y) {
-        // Snake eats the food
-        eatSound.play();
+        eatSound.current?.play();
         setFood({
           x: Math.floor(Math.random() * 10),
           y: Math.floor(Math.random() * 10),
         });
         setScore((prevScore) => prevScore + 1);
       } else {
-        newSnake.pop(); // Remove the last part of the snake's body
+        newSnake.pop();
       }
 
       return newSnake;
     });
   }, [direction, food]);
 
-  // Function to handle key press events
   const handleKeyPress = useCallback(
     (event: KeyboardEvent) => {
       switch (event.key) {
@@ -119,9 +119,7 @@ export default function SnakeGame() {
     [direction]
   );
 
-  // useEffect to handle the game interval and key press events
   useEffect(() => {
-
     if (gameState === GameState.RUNNING) {
       gameInterval.current = setInterval(moveSnake, 200);
       document.addEventListener("keydown", handleKeyPress);
@@ -136,43 +134,38 @@ export default function SnakeGame() {
     };
   }, [gameState, moveSnake, handleKeyPress]);
 
-  // Function to start the game
   const startGame = () => {
     setSnake(initialSnake);
     setFood(initialFood);
     setScore(0);
     setDirection(Direction.RIGHT);
-    gameStartSound.play();
+    gameStartSound.current?.play();
     setGameState(GameState.RUNNING);
   };
 
-  // Function to pause or resume the game
   const pauseGame = () => {
-    pauseSound.play();
+    pauseSound.current?.play();
     setGameState(
       gameState === GameState.RUNNING ? GameState.PAUSE : GameState.RUNNING
     );
   };
 
-  // Function to reset the game
   const resetGame = () => {
-    resetSound.play();
+    resetSound.current?.play();
     setGameState(GameState.START);
     setSnake(initialSnake);
     setFood(initialFood);
     setScore(0);
   };
 
-  // useEffect to update the high score
   useEffect(() => {
     if (score > highScore) {
       setHighScore(score);
     }
   }, [score, highScore]);
 
-  // JSX return statement rendering the Snake Game UI
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-[#0F0F0F] to-[#1E1E1E]">
+    <div className="flex flex-col items-center justify-center h-screen bg-gradient-to-br from-[#0F0F0F] to-[#1E1E1E] relative">
       <div className="max-w-2xl p-8 rounded-lg shadow-2xl bg-gray-800 border border-gray-700 transition-all hover:border-blue-500 hover:shadow-blue-500/50">
         <div className="flex items-center justify-between mb-6">
           <div className="text-3xl font-bold text-[#FF00FF] animate-pulse">
@@ -198,18 +191,14 @@ export default function SnakeGame() {
               <span className="sr-only">Pause/Resume</span>
             </Button>
             <Button
-  variant="ghost"
-  size="icon"
-  className="text-[#00FFFF] hover:bg-gradient-to-r hover:from-[#FF00FF] hover:to-[#00FFFF] transition-all duration-300"
-  onClick={resetGame}
->
-  <RefreshCcwIcon className="w-6 h-6" />
-  <span className="sr-only">Reset</span>
-</Button>
-
-
-
-
+              variant="ghost"
+              size="icon"
+              className="text-[#00FFFF] hover:bg-gradient-to-r hover:from-[#FF00FF] hover:to-[#00FFFF] transition-all duration-300"
+              onClick={resetGame}
+            >
+              <RefreshCcwIcon className="w-6 h-6" />
+              <span className="sr-only">Reset</span>
+            </Button>
           </div>
         </div>
         <div className="bg-[#0F0F0F] rounded-lg p-4 grid grid-cols-10 gap-1">
@@ -223,32 +212,45 @@ export default function SnakeGame() {
             return (
               <div
                 key={i}
-                className={`w-5 h-5 rounded-sm transition-all duration-300 ${
+                className={`w-8 h-8 rounded-sm ${
                   isSnakePart
-                    ? "bg-[#FF00FF] scale-110"
+                    ? "bg-[#FF00FF] transition-all animate-bounce"
                     : isFood
-                    ? "bg-[#00FFFF] animate-pulse"
-                    : "bg-[#1E1E1E]"
+                    ? "bg-[#00FFFF] transition-all animate-pulse"
+                    : "bg-[#333]"
                 }`}
-              />
+              ></div>
             );
           })}
         </div>
         <div className="flex items-center justify-between mt-6 text-[#00FFFF]">
-          <div>Score: {score}</div>
-          <div>High Score: {highScore}</div>
+          <div>
+            <span>Score: {score}</span>
+          </div>
+          <div>
+            <span>High Score: {highScore}</span>
+          </div>
         </div>
       </div>
+
+      {/* Game Over Overlay */}
       {gameState === GameState.GAME_OVER && (
-  <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-10 text-white text-3xl font-bold">
-    Game Over!
-  </div>
-)}
-            {/* Footer section */}
-            <footer className="mt-4 text-sm text-muted-foreground">
+        <div className="absolute top-0 left-0 right-0 bottom-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="text-center">
+            <h2 className="text-6xl font-bold text-white">Game Over</h2>
+            <Button
+              onClick={resetGame}
+              className="mt-4 text-lg bg-[#FF00FF] text-white px-6 py-2 rounded-lg hover:bg-[#00FFFF] transition-all"
+            >
+              Restart
+            </Button>
+          </div>
+        </div>
+      )}
+                  {/* Footer section */}
+                  <footer className="mt-4 text-sm text-muted-foreground">
         Created By Ismail Ahmed Shah
       </footer>
-
     </div>
   );
 }
