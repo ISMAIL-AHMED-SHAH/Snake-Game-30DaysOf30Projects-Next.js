@@ -1,3 +1,16 @@
+Day 26: Snake Game
+Description: A simple and interactive snake game.
+
+Functionalities:
+
+Start, stop, and pause the game
+Interactive gaming theme
+Display the final results, and try again
+
+Live Demo on Vercel :  https://snake-game-30-days-of30-projects-next-js.vercel.app/
+
+
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
